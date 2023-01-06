@@ -21,17 +21,6 @@ app.get("/", (req, res) => {
   res.send("server is ready");
 });
 
-// app.post("/products/:id", (req, res) => {
-//   const productdetail = data.products.filter(s
-//     (item) => item.id === +req.body.id
-//   );
-//   // if (product) {
-//   res.json(productdetail);
-//   // } else {
-//   //   res.status(404).send({ message: "Product Not Found" });
-//   // }
-// });
-
 app.use("/users", userRouter);
 app.use("/products", productRouter);
 app.use("/orders", orderRouter);

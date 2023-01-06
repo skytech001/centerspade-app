@@ -1,10 +1,23 @@
 import express from "express";
 import expressAsyncHandler from "express-async-handler";
 import Order from "../models/OrderModel.js";
-import { isAuth } from "../utils.js";
+import { isAdmin, isAuth } from "../utils.js";
 
 const orderRouter = express.Router();
+
 orderRouter.get(
+  //all orders
+  "/",
+  isAuth,
+  isAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const orders = await Order.find().populate("user", "name");
+    res.send(orders);
+  })
+);
+
+orderRouter.get(
+  //user orders
   "/mine",
   isAuth,
   expressAsyncHandler(async (req, res) => {
@@ -13,7 +26,23 @@ orderRouter.get(
   })
 );
 
+orderRouter.get(
+  // this order
+  "/:id",
+  isAuth,
+  expressAsyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+      res.send(order);
+    } else {
+      res.status(404).send({ message: "Order not found" });
+    }
+  })
+);
+
 orderRouter.post(
+  //create orders
   "/",
   isAuth, // by calling isAuth as a second param here, req.user will be filled with info comming from decode in our utils.js file.
   expressAsyncHandler(async (req, res) => {
@@ -47,16 +76,35 @@ orderRouter.post(
   })
 );
 
-orderRouter.get(
-  "/:id",
+orderRouter.put(
+  "/:id/deliver",
   isAuth,
+  isAdmin,
   expressAsyncHandler(async (req, res) => {
     const order = await Order.findById(req.params.id);
-
     if (order) {
-      res.send(order);
+      order.isDelivered = true;
+      order.deliveredAt = Date.now();
+      const updatedOrder = await order.save();
+      res.send({ message: "Order Delivered", order: updatedOrder });
     } else {
       res.status(404).send({ message: "Order not found" });
+    }
+  })
+);
+
+orderRouter.delete(
+  // delete order
+  "/:id",
+  isAuth,
+  isAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id);
+    if (order) {
+      await order.remove();
+      res.send({ message: "Order Deleted" });
+    } else {
+      res.status(404).send({ message: "Order Not Found" });
     }
   })
 );
